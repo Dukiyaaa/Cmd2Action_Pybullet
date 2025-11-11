@@ -5,7 +5,7 @@ import pybullet as p
 import pybullet_data
 from my_kinematics import forward_kinematics, inverse_kinematics
 
-cube_pos = [1.5, 0, 0.05]
+cube_pos = [1.2, -0.8, 0.05]
 def setup_scene(rotate_base: bool = True):
     """创建仿真场景并返回 (robot_id, cube_id)。"""
     p.connect(p.GUI)
@@ -73,7 +73,7 @@ def verify_ik(robot_id, target_sets, elbow: str = "down"):
         print("  Error vector :", tuple(err_vec.tolist()), "| norm=", err_norm)
         print("  ------------------------------------")
 
-def interpolate_and_set(robot_id, start, target, steps=60, sleep=1/240.):
+def interpolate_and_set(robot_id, start, target, steps=250, sleep=1/240.):
     """简单线性插值关节运动，避免瞬移。start/target: (t1,t2,d3)."""
     s1,s2,s3 = start
     e1,e2,e3 = target
@@ -86,7 +86,7 @@ def interpolate_and_set(robot_id, start, target, steps=60, sleep=1/240.):
         p.stepSimulation()
         time.sleep(sleep)
 
-def pick(robot_id, cube_id, elbow='down', approach_offset=0.10, lift_offset=0.20):
+def pick(robot_id, cube_id, elbow='down', approach_offset=0.2, lift_offset=0.25):
     """执行抓取: 走到方块上方 -> 下落抓取 -> 抬起。
 
     步骤:
@@ -98,6 +98,7 @@ def pick(robot_id, cube_id, elbow='down', approach_offset=0.10, lift_offset=0.20
       6. 抬起到 (cx, cy, cz + lift_offset)
     """
     cx, cy, cz = p.getBasePositionAndOrientation(cube_id)[0]
+    print("cx:{}, cy:{}, cz:{}".format(cx,cy,cz))
     # 末端上方目标
     approach_z = cz + approach_offset
     grasp_z = cz  # 如需压入可减去少量
@@ -114,14 +115,15 @@ def pick(robot_id, cube_id, elbow='down', approach_offset=0.10, lift_offset=0.20
         print("[pick] Approach 点不可达，放弃抓取。", (cx, cy, approach_z))
         return None
     interpolate_and_set(robot_id, (t1_cur,t2_cur,d3_cur), (t1_a,t2_a,d3_a))
+    # set_joint_states(robot_id, t1_a, t2_a, d3_a)
 
     # Grasp IK
-    t1_g, t2_g, d3_g, reach_g = inverse_kinematics(cx, cy, grasp_z, elbow=elbow)
-    if not reach_g:
-        print("[pick] 抓取高度不可达，放弃抓取。", (cx, cy, grasp_z))
-        return None
-    interpolate_and_set(robot_id, (t1_a,t2_a,d3_a), (t1_g,t2_g,d3_g))
-
+    # t1_g, t2_g, d3_g, reach_g = inverse_kinematics(cx, cy, grasp_z, elbow=elbow)
+    # if not reach_g:
+    #     print("[pick] 抓取高度不可达，放弃抓取。", (cx, cy, grasp_z))
+    #     return None
+    # # interpolate_and_set(robot_id, (t1_a,t2_a,d3_a), (t1_g,t2_g,d3_g))
+    # set_joint_states(robot_id, t1_g, t2_g, d3_g)
     # 创建约束 (末端 link index = 3)
     constraint_id = p.createConstraint(robot_id, 3, cube_id, -1, p.JOINT_FIXED,
                                        [0,0,0], [0,0,0], [0,0,0])
@@ -132,32 +134,23 @@ def pick(robot_id, cube_id, elbow='down', approach_offset=0.10, lift_offset=0.20
     if not reach_l:
         print("[pick] 抬起高度不可达，仅停留抓取位。")
         return constraint_id
-    interpolate_and_set(robot_id, (t1_g,t2_g,d3_g), (t1_l,t2_l,d3_l))
+    # interpolate_and_set(robot_id, (t1_a,t2_a,d3_a), (t1_l,t2_l,d3_l))
+    set_joint_states(robot_id, t1_l, t2_l, d3_l)
     print("[pick] 抓取并抬起完成。")
-    return constraint_id
+    return 1
 
 def main():
     robot_id, cube_id = setup_scene(rotate_base=True)  # 通过旋转基座实现与理论FK对齐
     # 测试关节集合：可加入更多覆盖边界
-    tests = [
-        (np.pi / 2, np.pi / 2, 0.0),
-        (np.pi/4, np.pi/4, -0.02),
-        (0.5, -0.3, -0.01),
-        (-1.0, 1.2, 0.0),
-        (2.3, -2.8, -0.05),  # 超界值会被 clamp
-        (np.pi, -np.pi, -0.03),
-        (0.6, 0, 0.1)
-    ]
-    # verify_positions(robot_id, tests)
 
     # 逆运动学目标点集合（可调）
     ik_targets = [
         (cube_pos[0], cube_pos[1], cube_pos[2] + 0.2)
     ]
-    verify_ik(robot_id, ik_targets, elbow="down")
+    # verify_ik(robot_id, ik_targets, elbow="down")
 
     # 执行抓取演示
-    constraint_id = pick(robot_id, cube_id, elbow='down', approach_offset=0.12, lift_offset=0.25)
+    constraint_id = pick(robot_id, cube_id, elbow='down', approach_offset=0.2, lift_offset=0.2)
     # 可选：移动到新位置(简单示例：绕 y 轴方向做一个小圆弧)略。
 
     print("保持最后一个姿态进行观察，关闭窗口以结束...")
