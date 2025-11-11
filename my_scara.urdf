@@ -1,0 +1,256 @@
+
+<?xml version="1.0"?>
+<robot name="scara_robot_left">
+
+<!--
+  SCARA机械臂结构详细中文注释：
+  - world：世界坐标系，所有物体的参考系。
+  - base_link：机械臂基座，固定在地面上，高度0.2米，圆柱体。
+  - joint_fix：固定关节，将base_link与world连接。
+  - rotation1：第一个旋转关节（Z轴），控制arm1绕base_link旋转，臂长1米，关节高度0.4米。
+  - arm1：第一节臂，长1.1米，宽0.1米，厚0.1米，安装在base_link上。
+  - rotation2：第二个旋转关节（Z轴），控制arm2绕arm1末端旋转，臂长0.8米，关节高度0.1米。
+  - arm2：第二节臂，长0.9米，宽0.1米，厚0.1米，安装在arm1末端。
+  - gripper_joint：升降关节（Z轴移动），控制夹爪基座上下移动，安装在arm2末端，移动范围-0.05~0米。
+  - gripper_link：夹爪基座，安装在arm2末端，可上下移动，连接四个手指。
+  - finger1_joint~finger4_joint：四个夹爪手指的移动关节，分别控制前、左、后、右四个手指的开合。
+  - finger1~finger4：夹爪四个手指，分别为前、左、后、右，尺寸均为0.01~0.02米。
+  机械臂主运动学自由度为3（2旋转+1升降），夹爪部分为末端执行器。
+-->
+
+<!-- 世界坐标系 -->
+<link name="world"/>
+
+<!-- 基座与世界固定 -->
+<joint name="joint_fix" type="fixed">
+  <parent link="world"/>
+  <child link="base_link"/>
+</joint>
+
+<!-- 机械臂基座，高度0.2米，圆柱体 -->
+<link name="base_link">
+  <collision>
+    <origin xyz="0 0 0.2" rpy="0 0 0"/>
+    <geometry>
+      <cylinder length="0.4" radius="0.1"/>
+    </geometry>
+  </collision>
+  <visual>
+    <origin xyz="0 0 0.2" rpy="0 0 0"/>
+    <geometry>
+      <cylinder length="0.4" radius="0.1"/>
+    </geometry>
+  </visual>
+  <inertial>
+    <origin xyz="0 0 0.2" rpy="0 0 0"/>
+    <mass value="1"/>
+    <inertia ixx="1.0" ixy="0.0" ixz="0.0" iyy="1.0" iyz="0.0" izz="1.0"/>
+  </inertial>
+</link>
+
+<!-- 第一个旋转关节，Z轴，arm1绕base_link旋转，关节高度0.4米 -->
+<joint name="rotation1" type="revolute">
+  <parent link="base_link"/>
+  <child link="arm1"/>
+  <origin xyz="0 0 0.4" rpy="0 0 0"/>
+  <axis xyz="0 0 1"/>
+  <limit effort="1000" velocity="1000" lower="-2.6" upper="2.6"/>
+</joint>
+
+<!-- 第一节臂，长1.1米，安装在base_link上 -->
+<link name="arm1">
+  <collision>
+    <origin xyz="0 -0.5 0.05" rpy="0 0 0"/>
+    <geometry>
+      <box size="0.1 1.1 0.1"/>
+    </geometry>
+  </collision>
+  <visual>
+    <origin xyz="0 -0.5 0.05" rpy="0 0 0"/>
+    <geometry>
+      <box size="0.1 1.1 0.1"/>
+    </geometry>
+  </visual>
+  <inertial>
+    <origin xyz="0 0 0.05" rpy="0 0 0"/>
+    <mass value="1"/>
+    <inertia ixx="0.001" ixy="0.0" ixz="0.0" iyy="0.001" iyz="0.0" izz="0.001"/>
+  </inertial>
+</link>
+
+<!-- 第二个旋转关节，Z轴，arm2绕arm1末端旋转，关节高度0.1米 -->
+<joint name="rotation2" type="revolute">
+  <parent link="arm1"/>
+  <child link="arm2"/>
+  <origin xyz="0 -1 0.1" rpy="0 0 0"/>
+  <axis xyz="0 0 1"/>
+  <limit effort="1000" velocity="1000" lower="-3.00" upper="3.00"/>
+</joint>
+
+<!-- 第二节臂，长0.9米，安装在arm1末端 -->
+<link name="arm2">
+  <collision>
+    <origin xyz="0 -0.4 0.05" rpy="0 0 0"/>
+    <geometry>
+      <box size="0.1 0.9 0.1"/>
+    </geometry>
+  </collision>
+  <visual>
+    <origin xyz="0 -0.4 0.05" rpy="0 0 0"/>
+    <geometry>
+      <box size="0.1 0.9 0.1"/>
+    </geometry>
+  </visual>
+  <inertial>
+    <origin xyz="0 0 0.05" rpy="0 0 0"/>
+    <mass value="1"/>
+    <inertia ixx="0.001" ixy="0.0" ixz="0.0" iyy="0.001" iyz="0.0" izz="0.001"/>
+  </inertial>
+</link>
+
+<!-- 升降关节，Z轴移动，夹爪基座上下移动，安装在arm2末端，移动范围-0.05~0米 -->
+<joint name="gripper_joint" type="prismatic">
+  <parent link="arm2"/>
+  <child link="gripper_link"/>
+  <origin xyz="0 -0.8 0" rpy="0 0 0"/>
+  <axis xyz="0 0 1"/>
+  <limit effort="100" velocity="100" lower="-0.5" upper="0.0"/>
+</joint>
+
+<!-- 夹爪基座，安装在arm2末端，可上下移动，连接四个手指 -->
+<link name="gripper_link">
+  <collision>
+    <origin xyz="0 0 -0.1" rpy="0 0 0"/>
+    <geometry>
+      <cylinder length="0.2" radius="0.02"/>
+    </geometry>
+  </collision>
+  <visual>
+    <origin xyz="0 0 -0.1" rpy="0 0 0"/>
+    <geometry>
+      <cylinder length="0.2" radius="0.02"/>
+    </geometry>
+  </visual>
+  <inertial>
+    <origin xyz="0 0 0" rpy="0 0 0"/>
+    <mass value="0.00001"/>
+    <inertia ixx="0.00001" ixy="0.0" ixz="0.0" iyy="0.00001" iyz="0.0" izz="0.00001"/>
+  </inertial>
+</link>
+
+<!-- 四个夹爪手指，分别为前、左、后、右，均为prismatic移动关节 -->
+<!-- 前手指，Y轴正方向移动 -->
+<joint name="finger1_joint" type="prismatic">
+  <parent link="gripper_link"/>
+  <child link="finger1"/>
+  <origin xyz="0 -0.04 -0.23" rpy="0 0 0"/>
+  <axis xyz="0 1 0"/>
+  <limit effort="100" velocity="100" lower="0.0" upper="0.02"/>
+</joint>
+<link name="finger1">
+  <collision>
+    <origin xyz="0 0 0" rpy="0 0 0"/>
+    <geometry>
+      <box size="0.02 0.01 0.02"/>
+    </geometry>
+  </collision>
+  <visual>
+    <origin xyz="0 0 0" rpy="0 0 0"/>
+    <geometry>
+      <box size="0.02 0.01 0.02"/>
+    </geometry>
+  </visual>
+  <inertial>
+    <origin xyz="0 0 0" rpy="0 0 0"/>
+    <mass value="0.00001"/>
+    <inertia ixx="0.00001" ixy="0.0" ixz="0.0" iyy="0.00001" iyz="0.0" izz="0.00001"/>
+  </inertial>
+</link>
+
+<!-- 左手指，X轴正方向移动 -->
+<joint name="finger2_joint" type="prismatic">
+  <parent link="gripper_link"/>
+  <child link="finger2"/>
+  <origin xyz="0.04 0 -0.23" rpy="0 0 0"/>
+  <axis xyz="1 0 0"/>
+  <limit effort="100" velocity="100" lower="-0.02" upper="0.0"/>
+</joint>
+<link name="finger2">
+  <collision>
+    <origin xyz="0 0 0" rpy="0 0 0"/>
+    <geometry>
+      <box size="0.01 0.02 0.02"/>
+    </geometry>
+  </collision>
+  <visual>
+    <origin xyz="0 0 0" rpy="0 0 0"/>
+    <geometry>
+      <box size="0.01 0.02 0.02"/>
+    </geometry>
+  </visual>
+  <inertial>
+    <origin xyz="0 0 0" rpy="0 0 0"/>
+    <mass value="0.00001"/>
+    <inertia ixx="0.00001" ixy="0.0" ixz="0.0" iyy="0.00001" iyz="0.0" izz="0.00001"/>
+  </inertial>
+</link>
+
+<!-- 后手指，Y轴负方向移动 -->
+<joint name="finger3_joint" type="prismatic">
+  <parent link="gripper_link"/>
+  <child link="finger3"/>
+  <origin xyz="0 0.04 -0.23" rpy="0 0 0"/>
+  <axis xyz="0 1 0"/>
+  <limit effort="100" velocity="100" lower="-0.02" upper="0.0"/>
+</joint>
+<link name="finger3">
+  <collision>
+    <origin xyz="0 0 0" rpy="0 0 0"/>
+    <geometry>
+      <box size="0.02 0.01 0.02"/>
+    </geometry>
+  </collision>
+  <visual>
+    <origin xyz="0 0 0" rpy="0 0 0"/>
+    <geometry>
+      <box size="0.02 0.01 0.02"/>
+    </geometry>
+  </visual>
+  <inertial>
+    <origin xyz="0 0 0" rpy="0 0 0"/>
+    <mass value="0.00001"/>
+    <inertia ixx="0.00001" ixy="0.0" ixz="0.0" iyy="0.00001" iyz="0.0" izz="0.00001"/>
+  </inertial>
+</link>
+
+<!-- 右手指，X轴负方向移动 -->
+<joint name="finger4_joint" type="prismatic">
+  <parent link="gripper_link"/>
+  <child link="finger4"/>
+  <origin xyz="-0.04 0 -0.23" rpy="0 0 0"/>
+  <axis xyz="1 0 0"/>
+  <limit effort="100" velocity="100" lower="0.0" upper="0.02"/>
+</joint>
+<link name="finger4">
+  <collision>
+    <origin xyz="0 0 0" rpy="0 0 0"/>
+    <geometry>
+      <box size="0.01 0.02 0.02"/>
+    </geometry>
+  </collision>
+  <visual>
+    <origin xyz="0 0 0" rpy="0 0 0"/>
+    <geometry>
+      <box size="0.01 0.02 0.02"/>
+    </geometry>
+  </visual>
+  <inertial>
+    <origin xyz="0 0 0" rpy="0 0 0"/>
+    <mass value="0.00001"/>
+    <inertia ixx="0.00001" ixy="0.0" ixz="0.0" iyy="0.00001" iyz="0.0" izz="0.00001"/>
+  </inertial>
+</link>
+
+</robot>
+
+

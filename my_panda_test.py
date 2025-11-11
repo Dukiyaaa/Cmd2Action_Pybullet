@@ -46,7 +46,7 @@ startOrientation = p.getQuaternionFromEuler([0, 0, 0])
 boxId = p.loadURDF("franka_panda/panda.urdf", startPos, startOrientation, useFixedBase=True)
 
 # 加载红色小方块
-cube_pos = [0, 0.4, 0.05]
+cube_pos = [-0.8, 0, 0.05]
 cube_orientation = p.getQuaternionFromEuler([0, 0, 0])
 cube_id = p.loadURDF("cube_small.urdf", cube_pos, cube_orientation)
 p.changeVisualShape(cube_id, -1, rgbaColor=[1, 0, 0, 1])
