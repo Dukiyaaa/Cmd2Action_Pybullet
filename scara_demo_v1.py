@@ -117,42 +117,33 @@ def pick(robot_id, cube_id, elbow='down', approach_offset=0.2, lift_offset=0.25)
     interpolate_and_set(robot_id, (t1_cur,t2_cur,d3_cur), (t1_a,t2_a,d3_a))
     # set_joint_states(robot_id, t1_a, t2_a, d3_a)
 
-    # Grasp IK
-    # t1_g, t2_g, d3_g, reach_g = inverse_kinematics(cx, cy, grasp_z, elbow=elbow)
-    # if not reach_g:
-    #     print("[pick] 抓取高度不可达，放弃抓取。", (cx, cy, grasp_z))
-    #     return None
-    # # interpolate_and_set(robot_id, (t1_a,t2_a,d3_a), (t1_g,t2_g,d3_g))
-    # set_joint_states(robot_id, t1_g, t2_g, d3_g)
+    t1_cur = p.getJointState(robot_id, 1)[0]
+    t2_cur = p.getJointState(robot_id, 2)[0]
+    d3_cur = p.getJointState(robot_id, 3)[0]
+    print("t1_a:{}, t2_a:{}, d3_a:{}, t1_cur:{}, t2_cur:{}, d3_cur:{}".format(t1_a, t2_a, d3_cur, t1_cur, t2_cur, d3_cur))
+
     # 创建约束 (末端 link index = 3)
     constraint_id = p.createConstraint(robot_id, 3, cube_id, -1, p.JOINT_FIXED,
                                        [0,0,0], [0,0,0], [0,0,0])
     print(f"[pick] 已创建约束 id={constraint_id}")
-
     # Lift IK
     t1_l, t2_l, d3_l, reach_l = inverse_kinematics(cx, cy, lift_z, elbow=elbow)
     if not reach_l:
         print("[pick] 抬起高度不可达，仅停留抓取位。")
         return constraint_id
-    # interpolate_and_set(robot_id, (t1_a,t2_a,d3_a), (t1_l,t2_l,d3_l))
+    # interpolate_and_set(robot_id, (t1_cur,t2_cur,d3_cur), (t1_l,t2_l,d3_l))
     set_joint_states(robot_id, t1_l, t2_l, d3_l)
+    time.sleep(1)
+
     print("[pick] 抓取并抬起完成。")
-    return 1
+    return constraint_id
 
 def main():
     robot_id, cube_id = setup_scene(rotate_base=True)  # 通过旋转基座实现与理论FK对齐
-    # 测试关节集合：可加入更多覆盖边界
-
-    # 逆运动学目标点集合（可调）
-    ik_targets = [
-        (cube_pos[0], cube_pos[1], cube_pos[2] + 0.2)
-    ]
-    # verify_ik(robot_id, ik_targets, elbow="down")
-
     # 执行抓取演示
     constraint_id = pick(robot_id, cube_id, elbow='down', approach_offset=0.2, lift_offset=0.2)
     # 可选：移动到新位置(简单示例：绕 y 轴方向做一个小圆弧)略。
-
+    # set_joint_states(robot_id, 0, 0, cube_pos[2] + 0.2)
     print("保持最后一个姿态进行观察，关闭窗口以结束...")
     try:
         for _ in range(20000):
