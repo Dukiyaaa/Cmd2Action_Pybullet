@@ -5,7 +5,7 @@ import pybullet as p
 import pybullet_data
 from my_kinematics import forward_kinematics, inverse_kinematics
 
-cube_pos = [1.2, -0.8, 0.05]
+cube_pos = [1.2, 0.8, 0.05]
 def setup_scene(rotate_base: bool = True):
     """创建仿真场景并返回 (robot_id, cube_id)。"""
     p.connect(p.GUI)
@@ -14,9 +14,9 @@ def setup_scene(rotate_base: bool = True):
     p.loadURDF("plane.urdf")
     if rotate_base:
         quat = p.getQuaternionFromEuler([0, 0, np.pi/2])  # 绕 Z +90°
-        robot = p.loadURDF("my_scara.urdf", [0, 0, 0], quat, useFixedBase=True)
+        robot = p.loadURDF("../urdf/my_scara.urdf", [0, 0, 0], quat, useFixedBase=True)
     else:
-        robot = p.loadURDF("my_scara.urdf", [0, 0, 0], useFixedBase=True)
+        robot = p.loadURDF("../urdf/my_scara.urdf", [0, 0, 0], useFixedBase=True)
     cube_id = p.loadURDF("cube_small.urdf", cube_pos)
     p.changeVisualShape(cube_id, -1, rgbaColor=[1, 0, 0, 1])
     return robot, cube_id
@@ -141,7 +141,7 @@ def pick(robot_id, cube_id, elbow='down', approach_offset=0.2, lift_offset=0.25)
 def main():
     robot_id, cube_id = setup_scene(rotate_base=True)  # 通过旋转基座实现与理论FK对齐
     # 执行抓取演示
-    constraint_id = pick(robot_id, cube_id, elbow='down', approach_offset=0.2, lift_offset=0.2)
+    constraint_id = pick(robot_id, cube_id, elbow='up', approach_offset=0.2, lift_offset=0.2)
     # 可选：移动到新位置(简单示例：绕 y 轴方向做一个小圆弧)略。
     # set_joint_states(robot_id, 0, 0, cube_pos[2] + 0.2)
     print("保持最后一个姿态进行观察，关闭窗口以结束...")

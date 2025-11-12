@@ -24,7 +24,7 @@ planeId = p.loadURDF("plane.urdf")
 # 加载scara机械臂
 startPos = [0, 0, 0]
 startOrientation = p.getQuaternionFromEuler([0, 0, 0])
-boxId = p.loadURDF("my_scara.urdf", startPos, startOrientation, useFixedBase=True)
+boxId = p.loadURDF("../urdf/my_scara.urdf", startPos, startOrientation, useFixedBase=True)
 
 # 加载红色小方块
 cube_pos = [-0.8, 0, 0.05]
